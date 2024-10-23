@@ -22,6 +22,9 @@ const Header = () => {
     window.addEventListener('resize', handleResize);
     handleResize();
 
+
+
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -62,6 +65,7 @@ const Header = () => {
         </button>
 
         <Link
+          onClick={() => setMenuOpened(false)}
           href="/"
           className={`relative text-1xl md:text-1xl lg:text-2xl xl:text-3xl 
                 rounded-b-xl w-[50%] h-full justify-center items-center after:content-[''] 
@@ -75,6 +79,7 @@ const Header = () => {
 
         {resized && (
           <Link
+            onClick={() => setMenuOpened(false)}
             href="/"
             className={`text-3xl bg-gray-600 w-[100%] h-[15%] 
               justify-center items-center transition-all duration-500 ease-in-out 
@@ -87,6 +92,7 @@ const Header = () => {
         )}
 
         <Link
+          onClick={() => setMenuOpened(false)}
           href="/regulamin"
           className="relative text-1xl md:text-1xl lg:text-2xl xl:text-3xl 
                 rounded-b-xl w-[50%] h-full justify-center items-center after:content-[''] 
@@ -99,6 +105,7 @@ const Header = () => {
         </Link>
         {resized && (
           <Link
+            onClick={() => setMenuOpened(false)}
             href="regulamin"
             className={`text-3xl bg-gray-600 w-[100%] h-[15%] 
               justify-center items-center transition-all duration-500 ease-in-out 
@@ -110,6 +117,7 @@ const Header = () => {
           </Link>
         )}
         <Link
+          onClick={() => setMenuOpened(false)}
           href="/profile"
           className={`relative text-1xl md:text-1xl lg:text-2xl xl:text-3xl 
                 rounded-b-xl w-[50%] h-full justify-center items-center after:content-[''] 
@@ -123,6 +131,7 @@ const Header = () => {
 
         {resized && (
           <Link
+            onClick={() => setMenuOpened(false)}
             href="/profile"
             className={`text-3xl bg-gray-600 w-[100%] h-[15%] 
               justify-center items-center transition-all duration-500 ease-in-out 
