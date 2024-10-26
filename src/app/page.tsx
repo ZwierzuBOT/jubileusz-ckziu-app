@@ -70,7 +70,7 @@ export default function Home() {
 
   return (
     <div
-      className="flex justify-center items-center w-full h-screen p-4"
+      className="flex justify-center items-start w-full h-screen p-4"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
