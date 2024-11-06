@@ -6,7 +6,8 @@ export default function Home() {
   const [dropFocused, setDropFocused] = useState(false);
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
-  const [className, setClassName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
+  const [parentName, setParentName] = useState('');
 
   const MAX_FILE_NAME_LENGTH = 30; 
 
@@ -65,12 +66,12 @@ export default function Home() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     //TUTAJ DALEJ COS
-    console.log({ name, surname, className, fileNames });
+    console.log({ name, surname, schoolName, parentName ,fileNames });
   };
 
   return (
     <div
-      className="flex justify-center items-start w-full h-screen p-4"
+      className="flex justify-center lg:items-center md:items-center sm:items-start items-start w-full h-screen p-4"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -81,7 +82,7 @@ export default function Home() {
           <input
             type="text"
             placeholder="Imię"
-            className="mb-2 p-2 rounded-lg text-black"
+            className="mb-2 p-2 rounded-lg text-black w-full"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -89,17 +90,25 @@ export default function Home() {
           <input
             type="text"
             placeholder="Nazwisko"
-            className="mb-2 p-2 rounded-lg text-black"
+            className="mb-2 p-2 rounded-lg text-black w-full"
             value={surname}
             onChange={(e) => setSurname(e.target.value)}
             required
           />
           <input
             type="text"
-            placeholder="Klasa"
-            className="mb-4 p-2 rounded-lg text-black"
-            value={className}
-            onChange={(e) => setClassName(e.target.value)}
+            placeholder="Imię opiekuna szkolnego"
+            className="mb-2 p-2 rounded-lg text-black w-full"
+            value={parentName}
+            onChange={(e) => setParentName(e.target.value)}
+            required
+          />
+            <input
+            type="text"
+            placeholder="Szkoła"
+            className="mb-4 p-2 rounded-lg text-black w-full"
+            value={schoolName}
+            onChange={(e) => setSchoolName(e.target.value)}
             required
           />
           <div className="h-1/2 flex justify-center items-end w-full mb-4 ">
