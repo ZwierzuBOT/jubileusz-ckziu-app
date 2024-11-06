@@ -1,5 +1,5 @@
 'use client';
-import { useState, ChangeEvent, DragEvent } from 'react';
+import { useState, ChangeEvent, DragEvent, useEffect } from 'react';
 
 export default function Home() {
   const [fileNames, setFileNames] = useState<string[]>([]);
@@ -68,7 +68,32 @@ export default function Home() {
     //TUTAJ DALEJ COS
     console.log({ name, surname, schoolName, parentName ,fileNames });
   };
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+      const timer = setTimeout(() => {
+          setIsLoading(false); 
+      }, 2000); 
+
+      return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return(
+    
+            <div className="w-full h-[87vh] flex flex-col justify-center items-center">
+                <div className="lg:w-[10%] md:w-[15%] sm:w-[40%] w-[40%] h-[10%] flex justify-evenly items-center">
+                    <div className="loadingPart loadingPart1 max-w-4 min-w-2 h-[50%] "></div>
+                    <div className="loadingPart loadingPart2 max-w-4 min-w-2 h-[50%] "></div>
+                    <div className="loadingPart loadingPart3 max-w-4 min-w-2 h-[50%] "></div>
+                    <div className="loadingPart loadingPart4 max-w-4 min-w-2 h-[50%] "></div>
+                    <div className="loadingPart loadingPart5 max-w-4 min-w-2 h-[50%] "></div>
+                </div>
+                <h1 className="text-gray-700 lg:text-3xl md:text-2xl sm:text-xl">Prosze Czekać</h1>
+            </div>
+
+    )
+  }else{
   return (
     <div
       className="flex justify-center lg:items-center md:items-center sm:items-start items-start w-full h-screen p-4"
@@ -161,4 +186,5 @@ export default function Home() {
       </div>
     </div>
   );
+}
 }

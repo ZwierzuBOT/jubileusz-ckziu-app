@@ -1,9 +1,9 @@
 const page = () => {
-    return ( 
-        <div>
-            <h1 className="text-black">Regulamin</h1>
+    return (
+        <div className="text-black">
+            Regulamin
         </div>
-     );
+    );
 }
- 
+
 export default page;
