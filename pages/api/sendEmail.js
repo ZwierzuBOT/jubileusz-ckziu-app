@@ -9,11 +9,18 @@ export const config = {
   },
 };
 
+const tmpDir = path.join(process.cwd(), '/tmp');  // Define path for local tmp folder
+
+// Ensure that the tmp directory exists locally (for localhost use)
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir, { recursive: true });
+}
+
 const parseForm = (req) => {
   return new Promise((resolve, reject) => {
     const form = formidable({
       keepExtensions: true,
-      uploadDir: path.join('/tmp'), // Use Vercel's temp directory
+      uploadDir: tmpDir, // Use the local tmp directory
     });
 
     form.parse(req, (err, fields, files) => {
@@ -67,7 +74,7 @@ const handler = async (req, res) => {
       attachments.forEach((file) => {
         mailOptions.attachments.push({
           filename: file.originalFilename || 'unknown',
-          path: file.filepath,  // Use the temporary file path
+          path: file.filepath,
         });
       });
 
