@@ -1,7 +1,5 @@
 'use client';
 import { useState, ChangeEvent, DragEvent, useEffect, FormEvent } from 'react';
-import { SignedIn, useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [fileNames, setFileNames] = useState<string[]>([]);
@@ -12,13 +10,8 @@ export default function Home() {
   const [schoolName, setSchoolName] = useState('');
   const [parentName, setParentName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [totalFileSize, setTotalFileSize] = useState(0);
-  
-  const { user } = useUser();
-  const router = useRouter();
-  
+
   const MAX_FILE_NAME_LENGTH = 30;
-  const MAX_TOTAL_SIZE = 50 * 1024 * 1024; 
 
   const truncateFileName = (fileName: string) => {
     return fileName.length > MAX_FILE_NAME_LENGTH
@@ -33,20 +26,12 @@ export default function Home() {
     return `${fileCount} plików wybranych`;
   };
 
-  const calculateTotalFileSize = (files: File[]) => {
-    return files.reduce((acc, file) => acc + file.size, 0);
-  };
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length > 0) {
-      const newFiles = [...files, ...selectedFiles];
-      setFiles(newFiles);
-      setFileNames((prevFileNames) => [
-        ...prevFileNames,
-        ...selectedFiles.map((file) => truncateFileName(file.name)),
-      ]);
-      setTotalFileSize(calculateTotalFileSize(newFiles));
+      setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+      const truncatedNames = selectedFiles.map((file) => truncateFileName(file.name));
+      setFileNames((prevFileNames) => [...prevFileNames, ...truncatedNames]);
     }
   };
 
@@ -71,68 +56,47 @@ export default function Home() {
 
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
-      const newFiles = [...files, ...droppedFiles];
-      setFiles(newFiles);
-      setFileNames((prevFileNames) => [
-        ...prevFileNames,
-        ...droppedFiles.map((file) => truncateFileName(file.name)),
-      ]);
-      setTotalFileSize(calculateTotalFileSize(newFiles));
+      setFiles((prevFiles) => [...prevFiles, ...droppedFiles]);
+      const truncatedNames = droppedFiles.map((file) => truncateFileName(file.name));
+      setFileNames((prevFileNames) => [...prevFileNames, ...truncatedNames]);
     }
   };
 
   const handleDeleteFile = (fileName: string) => {
-    const updatedFiles = files.filter(file => file.name !== fileName);
     setFileNames((prevFileNames) => prevFileNames.filter(name => name !== fileName));
-    setFiles(updatedFiles);
-    setTotalFileSize(calculateTotalFileSize(updatedFiles));
+    setFiles((prevFiles) => prevFiles.filter(file => file.name !== fileName));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLElement>) => {
     e.preventDefault();
   
     const formData = new FormData();
+    formData.append('to', 'zwierzchowski.mateo@gmail.com');  
+    formData.append('subject', `Application from ${name} ${surname}`);
+    formData.append('message', `School: ${schoolName}\nGuardian: ${parentName}`);
   
-    const fileInput = document.getElementById('file-upload') as HTMLInputElement;  
-    if (fileInput && fileInput.files) {
-      if (fileInput.files.length > 0) {
-        formData.append('attachments', fileInput.files[0]);  
-      }
-    }
-    
-    fetch('https://jubileusz-ckziu.vercel.app/api/sendEmail', {
-      method: 'POST',
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Success:', data);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  
-    formData.append('to', 'zwierzchowski.mateo@gmail.com');
-    formData.append('subject', `Załącznik przesłany od ${name} ${surname}`);
-    formData.append('message', `Imię: ${name}\nNazwisko: ${surname}\nSzkoła: ${schoolName}\nOpiekun Szkolny: ${parentName}`);
-    formData.append('name', name);  
-    formData.append('surname', surname);  
-    formData.append('parentName', parentName); 
-    formData.append('schoolName', schoolName);  
-    if (user && user.emailAddresses.length > 0) {
-      const userEmail = user.emailAddresses[0].emailAddress; 
-      formData.append("userEmail", userEmail || "");
-    }
   
     files.forEach((file) => formData.append('attachments', file));
   
+    try {
+      const response = await fetch('/api/sendEmail', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (response.ok) {
+        alert('Email sent successfully');
+        console.log(name, surname, parentName, schoolName);
+      } else {
+        alert('Error sending email');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error sending email');
+    }
   };
   
-  useEffect(() => {
-    if (!user){
-      router.push("/sign-in");
-    }
-  }, [user, router]);
+  
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2000);
@@ -154,7 +118,6 @@ export default function Home() {
     );
   } else {
     return (
-      <SignedIn>
       <div
         className="flex justify-center lg:items-center md:items-center sm:items-start items-start w-full h-screen p-4"
         onDragOver={handleDragOver}
@@ -213,9 +176,6 @@ export default function Home() {
                 </label>
               </div>
             </div>
-            <p className={totalFileSize > MAX_TOTAL_SIZE ? 'text-red-500' : 'text-gray-100'}>
-              Pliki nie mogą przekraczać 50mb
-            </p>
             <div className="h-1/2 flex flex-col items-center justify-center">
               <ul className="text-white list-disc pl-5">
                 {fileNames.map((fileName, index) => (
@@ -232,11 +192,7 @@ export default function Home() {
                 ))}
               </ul>
             </div>
-            <button
-              type="submit"
-              className={`mt-4 text-white rounded-lg py-2 ${totalFileSize > MAX_TOTAL_SIZE ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-700'}`}
-              disabled={totalFileSize > MAX_TOTAL_SIZE}
-            >
+            <button type="submit" className="mt-4 bg-blue-700 text-white rounded-lg py-2">
               Prześlij
             </button>
           </form>
@@ -252,7 +208,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-      </SignedIn>
     );
   }
 }
