@@ -1,6 +1,8 @@
+import fs from 'fs';
+import path from 'path';
 import nodemailer from 'nodemailer';
 import formidable from 'formidable';
-import path from 'path';
+import { promisify } from 'util';
 
 export const config = {
   api: {
@@ -9,30 +11,40 @@ export const config = {
 };
 
 const parseForm = (req: any) => {
-    return new Promise((resolve, reject) => {
-      const form = formidable({ 
-        keepExtensions: true, 
-        uploadDir: path.join(process.cwd(), '/tmp'),
-      });
-  
-      form.parse(req, (err, fields, files) => {
-        if (err) {
-          reject(err);
-        } else {
-          console.log('Parsed fields:', fields);
-          console.log('Parsed files:', files);
-          resolve({ fields, files });
-        }
-      });
+  return new Promise((resolve, reject) => {
+    const form = formidable({ 
+      keepExtensions: true, 
+      uploadDir: path.join(process.cwd(), '/tmp'),
     });
-  };
-  
+
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err);
+      } else {
+        console.log('Parsed fields:', fields);
+        console.log('Parsed files:', files);
+        resolve({ fields, files });
+      }
+    });
+  });
+};
+
+const deleteTempFiles = (files: any[]) => {
+  files.forEach(file => {
+    const filePath = file.filepath;
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(`Failed to delete file: ${filePath}`, err);
+      } else {
+        console.log(`Deleted file: ${filePath}`);
+      }
+    });
+  });
+};
 
 const handler = async (req: any, res: any) => {
   if (req.method === 'POST') {
     try {
-
-
       const { fields, files } = await parseForm(req);
 
       console.log('Form parsed successfully');
@@ -65,8 +77,13 @@ const handler = async (req: any, res: any) => {
         });
       }
 
+      // Send the email
       await transporter.sendMail(mailOptions);
       console.log('Email sent successfully!');
+
+      // Delete temp files after email is sent
+      deleteTempFiles(Array.isArray(files.attachments) ? files.attachments : [files.attachments]);
+
       res.status(200).json({ message: 'Email sent successfully!' });
     } catch (error) {
       console.error('Error sending email:', error);
