@@ -1,33 +1,14 @@
-import { clerkMiddleware, getAuth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isPublicRoute = (path) => {
-  const publicRoutes = ['/sign-in', '/sign-up'];
-  return publicRoutes.some((route) => path.startsWith(route));
-};
+const isProtectedRoute = createRouteMatcher(['/', '/regulamin', '/profile'])
 
-export default clerkMiddleware((auth, request) => {
-  const { userId } = getAuth(request);
-  const { pathname } = request.nextUrl;
-
-  // Redirect to "/sign-in" if not signed in and path is "/"
-  if (!userId && (pathname === '/' )) {
-    const signInUrl = new URL('/sign-in', request.url);
-    return NextResponse.redirect(signInUrl);
-  }
-
-  // Allow access to public routes
-  if (isPublicRoute(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Protect other routes (requires authentication)
-  return auth.protect();
-});
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) await auth.protect()
+})
 
 export const config = {
   matcher: [
-    // Match all routes for potential middleware processing
-    '/((?!_next|.*\\.(?:ico|jpg|jpeg|png|svg|css|js|json)).*)',
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
   ],
-};
+}
