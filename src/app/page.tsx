@@ -92,23 +92,23 @@ export default function Home() {
     e.preventDefault();
   
     const formData = new FormData();
-  
-    // Append the form data
-    formData.append('name', name);
-    formData.append('surname', surname);
-    formData.append('schoolName', schoolName);
-    formData.append('parentName', parentName);
-  
-    // Append the files
-    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-    if (fileInput && fileInput.files) {
-      Array.from(fileInput.files).forEach((file) => {
-        formData.append('attachments', file);
-      });
+    formData.append('to', 'zwierzchowski.mateo@gmail.com');
+    formData.append('subject', `Załącznik przesłany od ${name} ${surname}`);
+    formData.append('message', `Imię: ${name}\nNazwisko: ${surname}\nSzkoła: ${schoolName}\nOpiekun Szkolny: ${parentName}`);
+    formData.append('name', name);  
+    formData.append('surname', surname);  
+    formData.append('parentName', parentName); 
+    formData.append('schoolName', schoolName);  
+    if (user && user.emailAddresses.length > 0) {
+      const userEmail = user.emailAddresses[0].emailAddress; 
+      formData.append("userEmail", userEmail || "");
     }
   
+  
+    files.forEach((file) => formData.append('attachments', file));
+  
     try {
-      const response = await fetch('https://jubileusz-ckziu.vercel.app/api/sendEmail', {
+      const response = await fetch('/api/sendEmail', {
         method: 'POST',
         body: formData,
       });
@@ -123,8 +123,6 @@ export default function Home() {
       alert('Error sending email');
     }
   };
-  
-  
   
   useEffect(() => {
     if (!user){

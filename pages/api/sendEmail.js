@@ -1,82 +1,116 @@
 import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
-import multer from 'multer';
+import formidable from 'formidable';
+import { BlobStorage } from '@vercel/blob';  // Correct import
 
 export const config = {
   api: {
-    bodyParser: false,  // Disable the default body parser for file uploads
+    bodyParser: false,  // Disable body parser to handle file uploads manually
   },
 };
 
-// Multer setup for handling file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Store the uploaded files in a temporary directory
-    cb(null, path.join(process.cwd(), '/tmp'));
-  },
-  filename: function (req, file, cb) {
-    // Use the original filename
-    cb(null, file.originalname);
-  },
+// Vercel Blob client
+const blobClient = new BlobStorage({
+  token: process.env.BLOB_READ_WRITE_TOKEN,  // Vercel Blob read-write token
+  projectId: process.env.VERCEL_PROJECT_ID,  // Vercel Project ID
 });
 
-const upload = multer({ storage: storage });
+// Parse form data using formidable
+const parseForm = (req) => {
+  return new Promise((resolve, reject) => {
+    const form = formidable({
+      keepExtensions: true,
+      uploadDir: path.join(process.cwd(), '/tmp'), // Temporarily saving files before uploading to Blob
+    });
+
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ fields, files: { attachments: files.attachments } });
+      }
+    });
+  });
+};
+
+// Function to upload files to Vercel Blob
+const uploadToBlob = async (file) => {
+  const filePath = file.filepath;
+  const fileStream = fs.createReadStream(filePath);
+
+  // Upload the file to Blob storage
+  const blob = await blobClient.upload(fileStream, {
+    name: file.originalFilename,
+    contentType: file.mimetype,
+  });
+
+  // Return the URL of the uploaded file
+  return blob.url;
+};
+
+// Function to delete temporary files after email is sent
+const deleteTempFiles = (files) => {
+  files.forEach((file) => {
+    const filePath = file.filepath;
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(`Failed to delete file: ${filePath}`, err);
+      } else {
+        console.log(`Deleted file: ${filePath}`);
+      }
+    });
+  });
+};
 
 const handler = async (req, res) => {
   if (req.method === 'POST') {
-    // Use the multer middleware to handle the file upload
-    upload.array('attachments')(req, res, async (err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Error uploading files', error: err.message });
-      }
+    try {
+      const { fields, files } = await parseForm(req);
 
-      try {
-        const { fields } = req.body;  // Assuming you have other form fields in req.body
+      // Upload files to Blob Storage
+      const attachments = Array.isArray(files.attachments)
+        ? files.attachments
+        : [files.attachments];
 
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
+      const attachmentUrls = await Promise.all(
+        attachments.map(async (file) => {
+          const fileUrl = await uploadToBlob(file);
+          return { filename: file.originalFilename, url: fileUrl };
+        })
+      );
 
-        const mailOptions = {
-          from: 'zwierzchowski.mateo@gmail.com',
-          to: 'zwierzchowski.mateo@gmail.com',
-          subject: `Załącznik przesłany od ${fields.name} ${fields.surname}`,
-          text: `Imię: ${fields.name}\nNazwisko: ${fields.surname}\nSzkoła: ${fields.schoolName}\nOpiekun Szkolny: ${fields.parentName}`,
-          attachments: [],
-        };
+      // Create email transport with nodemailer
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,  // Ensure your email is stored in Vercel's environment variables
+          pass: process.env.EMAIL_PASS,  // Or use OAuth credentials securely
+        },
+      });
 
-        const attachments = Array.isArray(req.files) ? req.files : [req.files];
-        
-        attachments.forEach((file) => {
-          mailOptions.attachments.push({
-            filename: file.originalname,
-            path: file.path,  
-          });
-        });
+      const mailOptions = {
+        from: 'zwierzchowski.mateo@gmail.com',
+        to: 'zwierzchowski.mateo@gmail.com',
+        subject: `Załącznik przesłany od ${fields.name} ${fields.surname}`,
+        text: `Imię: ${fields.name}\nNazwisko: ${fields.surname}\nSzkoła: ${fields.schoolName}\nOpiekun Szkolny: ${fields.parentName}`,
+        attachments: attachmentUrls.map((file) => ({
+          filename: file.filename,
+          path: file.url,  // Using the URL of the file in Blob Storage
+        })),
+      };
 
-        await transporter.sendMail(mailOptions);
+      // Send email with attachments from Blob Storage
+      await transporter.sendMail(mailOptions);
 
-        attachments.forEach((file) => {
-          fs.unlink(file.path, (err) => {
-            if (err) {
-              console.error(`Failed to delete file: ${file.path}`, err);
-            } else {
-              console.log(`Deleted file: ${file.path}`);
-            }
-          });
-        });
+      // Clean up the temporary files
+      deleteTempFiles(attachments);
 
-        res.status(200).json({ message: 'Email sent successfully!' });
-      } catch (error) {
-        console.error('Error sending email:', error);
-        res.status(500).json({ message: 'Error sending email', error: error.message });
-      }
-    });
+      res.status(200).json({ message: 'Email sent successfully!' });
+    } catch (error) {
+      console.error('Error sending email:', error);
+      res.status(500).json({ message: 'Error sending email', error: error.message });
+    }
   } else {
     res.status(405).json({ message: 'Method Not Allowed' });
   }
