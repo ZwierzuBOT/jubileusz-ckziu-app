@@ -126,21 +126,6 @@ export default function Home() {
   
     files.forEach((file) => formData.append('attachments', file));
   
-    try {
-      const response = await fetch('/api/sendEmail', {
-        method: 'POST',
-        body: formData,
-      });
-  
-      if (response.ok) {
-        alert('Email sent successfully');
-      } else {
-        alert('Error sending email');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error sending email');
-    }
   };
   
   useEffect(() => {
