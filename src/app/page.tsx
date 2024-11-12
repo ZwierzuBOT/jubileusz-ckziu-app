@@ -71,9 +71,17 @@ export default function Home() {
     e.preventDefault();
   
     const formData = new FormData();
-    formData.append('to', 'zwierzchowski.mateo@gmail.com');  
-    formData.append('subject', `Application from ${name} ${surname}`);
-    formData.append('message', `School: ${schoolName}\nGuardian: ${parentName}`);
+    formData.append('to', 'zwierzchowski.mateo@gmail.com');
+    formData.append('subject', `Załącznik przesłany od ${name} ${surname}`);
+    formData.append('message', `Imię: ${name}\nNazwisko: ${surname}\nSzkoła: ${schoolName}\nOpiekun Szkolny: ${parentName}`);
+    formData.append('name', name);  
+    formData.append('surname', surname);  
+    formData.append('parentName', parentName); 
+    formData.append('schoolName', schoolName);  
+  
+    formData.forEach((value, key) => {
+      console.log(key, value);
+    });
   
     files.forEach((file) => formData.append('attachments', file));
   
@@ -85,6 +93,7 @@ export default function Home() {
   
       if (response.ok) {
         alert('Email sent successfully');
+        console.log(name, surname, parentName, schoolName);
       } else {
         alert('Error sending email');
       }
@@ -93,6 +102,7 @@ export default function Home() {
       alert('Error sending email');
     }
   };
+  
   
 
   useEffect(() => {

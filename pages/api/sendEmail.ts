@@ -9,27 +9,29 @@ export const config = {
 };
 
 const parseForm = (req: any) => {
-  return new Promise((resolve, reject) => {
-    const form = formidable({ 
-      keepExtensions: true, 
-      uploadDir: path.join(process.cwd(), '/tmp'),  
+    return new Promise((resolve, reject) => {
+      const form = formidable({ 
+        keepExtensions: true, 
+        uploadDir: path.join(process.cwd(), '/tmp'),
+      });
+  
+      form.parse(req, (err, fields, files) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log('Parsed fields:', fields);
+          console.log('Parsed files:', files);
+          resolve({ fields, files });
+        }
+      });
     });
-
-    form.parse(req, (err, fields, files) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ fields, files });
-      }
-    });
-  });
-};
+  };
+  
 
 const handler = async (req: any, res: any) => {
   if (req.method === 'POST') {
     try {
-      console.log('Received request method: POST');
-      console.log('Start parsing the form...');
+
 
       const { fields, files } = await parseForm(req);
 
@@ -48,8 +50,8 @@ const handler = async (req: any, res: any) => {
       const mailOptions = {
         from: 'zwierzchowski.mateo@gmail.com', 
         to: 'zwierzchowski.mateo@gmail.com',  
-        subject: `Application from ${fields.name} ${fields.surname}`, 
-        text: `School: ${fields.schoolName}\nGuardian: ${fields.parentName}`, 
+        subject: `Załącznik przesłany od ${fields.name} ${fields.surname}`, 
+        text: `Imię: ${fields.name}\nNazwisko: ${fields.surname}\nSzkoła: ${fields.schoolName}\nOpiekun Szkolny: ${fields.parentName}`, 
         attachments: [],
       };
 
