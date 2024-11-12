@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
-import formidable, { Files, Fields } from 'formidable';
+import formidable from 'formidable';
 
 export const config = {
   api: {
@@ -9,14 +9,7 @@ export const config = {
   },
 };
 
-interface ParsedForm {
-  fields: Fields;
-  files: {
-    attachments: Files;
-  };
-}
-
-const parseForm = (req: any): Promise<ParsedForm> => {
+const parseForm = (req) => {
   return new Promise((resolve, reject) => {
     const form = formidable({
       keepExtensions: true,
@@ -33,7 +26,7 @@ const parseForm = (req: any): Promise<ParsedForm> => {
   });
 };
 
-const deleteTempFiles = (files: { filepath: string }[]) => {
+const deleteTempFiles = (files) => {
   files.forEach((file) => {
     const filePath = file.filepath;
     fs.unlink(filePath, (err) => {
@@ -46,7 +39,7 @@ const deleteTempFiles = (files: { filepath: string }[]) => {
   });
 };
 
-const handler = async (req: any, res: any) => {
+const handler = async (req, res) => {
   if (req.method === 'POST') {
     try {
       const { fields, files } = await parseForm(req);
@@ -67,18 +60,19 @@ const handler = async (req: any, res: any) => {
         attachments: [],
       };
 
-      if (files.attachments) {
-        const filesArray = Array.isArray(files.attachments) ? files.attachments : [files.attachments];
-        filesArray.forEach((file: any) => {
-          mailOptions.attachments.push({
-            filename: file.originalFilename,
-            path: file.filepath,
-          });
+      const attachments = Array.isArray(files.attachments)
+        ? files.attachments
+        : [files.attachments];
+
+      attachments.forEach((file) => {
+        mailOptions.attachments.push({
+          filename: file.originalFilename || 'unknown', 
+          path: file.filepath,
         });
-      }
+      });
 
       await transporter.sendMail(mailOptions);
-      deleteTempFiles(Array.isArray(files.attachments) ? files.attachments : [files.attachments]);
+      deleteTempFiles(attachments);
 
       res.status(200).json({ message: 'Email sent successfully!' });
     } catch (error) {
