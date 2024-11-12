@@ -47,8 +47,8 @@ const handler = async (req, res) => {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: 'zwierzchowski.mateo@gmail.com',
-          pass: 'rmhy oihb upwo hbam',
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
         },
       });
 
@@ -66,12 +66,13 @@ const handler = async (req, res) => {
 
       attachments.forEach((file) => {
         mailOptions.attachments.push({
-          filename: file.originalFilename || 'unknown', 
+          filename: file.originalFilename || 'unknown',
           path: file.filepath,
         });
       });
 
       await transporter.sendMail(mailOptions);
+
       deleteTempFiles(attachments);
 
       res.status(200).json({ message: 'Email sent successfully!' });

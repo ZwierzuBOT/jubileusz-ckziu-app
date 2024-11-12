@@ -18,7 +18,7 @@ export default function Home() {
   const router = useRouter();
   
   const MAX_FILE_NAME_LENGTH = 30;
-  const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50 MB in bytes
+  const MAX_TOTAL_SIZE = 50 * 1024 * 1024; 
 
   const truncateFileName = (fileName: string) => {
     return fileName.length > MAX_FILE_NAME_LENGTH
@@ -104,9 +104,6 @@ export default function Home() {
       formData.append("userEmail", userEmail || "");
     }
   
-    formData.forEach((value, key) => {
-      console.log(key, value);
-    });
   
     files.forEach((file) => formData.append('attachments', file));
   
@@ -118,7 +115,6 @@ export default function Home() {
   
       if (response.ok) {
         alert('Email sent successfully');
-        console.log(name, surname, parentName, schoolName);
       } else {
         alert('Error sending email');
       }
