@@ -1,6 +1,7 @@
 'use client';
 import { useState, ChangeEvent, DragEvent, useEffect, FormEvent } from 'react';
-
+import { SignedIn, useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 export default function Home() {
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
@@ -10,6 +11,8 @@ export default function Home() {
   const [schoolName, setSchoolName] = useState('');
   const [parentName, setParentName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  const { user } = useUser();
 
   const MAX_FILE_NAME_LENGTH = 30;
 
@@ -78,6 +81,10 @@ export default function Home() {
     formData.append('surname', surname);  
     formData.append('parentName', parentName); 
     formData.append('schoolName', schoolName);  
+    if (user && user.emailAddresses.length > 0) {
+      const userEmail = user.emailAddresses[0].emailAddress; 
+      formData.append("userEmail", userEmail || "");
+    }
   
     formData.forEach((value, key) => {
       console.log(key, value);
@@ -103,6 +110,13 @@ export default function Home() {
     }
   };
   
+  const router = useRouter()
+  useEffect(()=>{
+    if (!user){
+      router.push("/sign-in")
+    }
+  })
+
   
 
   useEffect(() => {
@@ -125,6 +139,7 @@ export default function Home() {
     );
   } else {
     return (
+      <SignedIn>
       <div
         className="flex justify-center lg:items-center md:items-center sm:items-start items-start w-full h-screen p-4"
         onDragOver={handleDragOver}
@@ -215,6 +230,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+      </SignedIn>
+
     );
   }
 }

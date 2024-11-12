@@ -77,7 +77,6 @@ const handler = async (req: any, res: any) => {
         });
       }
 
-      // Send the email
       await transporter.sendMail(mailOptions);
       console.log('Email sent successfully!');
 
