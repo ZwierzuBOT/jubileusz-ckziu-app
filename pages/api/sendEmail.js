@@ -1,18 +1,23 @@
 import nodemailer from 'nodemailer';
 import formidable from 'formidable';
 import path from 'path';
+import { Dropbox } from 'dropbox';
+import fs from 'fs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const config = {
   api: {
-    bodyParser: false, 
+    bodyParser: false,
   },
 };
 
 const parseForm = (req) => {
   return new Promise((resolve, reject) => {
-    const form = formidable({ 
-      keepExtensions: true, 
-      uploadDir: path.join(process.cwd(), '/tmp'),  
+    const form = formidable({
+      keepExtensions: true,
+      uploadDir: path.join(process.cwd(), '/tmp'),
     });
 
     form.parse(req, (err, fields, files) => {
@@ -23,6 +28,20 @@ const parseForm = (req) => {
       }
     });
   });
+};
+
+const uploadFileToDropbox = async (file) => {
+  const dbx = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
+  const fileContent = fs.readFileSync(file.filepath);
+  const fileName = file.originalFilename || 'uploaded_file';
+
+  const response = await dbx.filesUpload({
+    path: `/${fileName}`, // Corrected this line to use template literals properly
+    contents: fileContent,
+  });
+
+  const link = await dbx.sharingCreateSharedLinkWithSettings({ path: response.result.path_display });
+  return link.result.url.replace('?dl=0', '?dl=1'); // Convert to direct download link
 };
 
 const handler = async (req, res) => {
@@ -37,31 +56,30 @@ const handler = async (req, res) => {
       console.log('Fields:', fields);
       console.log('Files:', files);
 
+      const fileLinks = [];
+      if (files.attachments) {
+        const filesArray = Array.isArray(files.attachments) ? files.attachments : [files.attachments];
+
+        for (const file of filesArray) {
+          const link = await uploadFileToDropbox(file);
+          fileLinks.push(link);
+        }
+      }
+
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: 'zwierzchowski.mateo@gmail.com', 
-          pass: 'rmhy oihb upwo hbam', 
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
         },
       });
 
       const mailOptions = {
-        from: 'zwierzchowski.mateo@gmail.com', 
-        to: 'zwierzchowski.mateo@gmail.com',  
-        subject: `Application from ${fields.name} ${fields.surname}`, 
-        text: `School: ${fields.schoolName}\nGuardian: ${fields.parentName}`, 
-        attachments: [],
+        from: process.env.EMAIL_USER,
+        to: 'zwierzchowski.mateo@gmail.com',
+        subject: `Application from ${fields.name} ${fields.surname}`, // Corrected this line to use template literals properly
+        text: `School: ${fields.schoolName}\nGuardian: ${fields.parentName}\n\nLinki do załączników:\n${fileLinks.join('\n')}`, // Corrected this line to use template literals properly
       };
-
-      if (files.attachments) {
-        const filesArray = Array.isArray(files.attachments) ? files.attachments : [files.attachments];
-        filesArray.forEach((file) => {
-          mailOptions.attachments.push({
-            filename: file.originalFilename,
-            path: file.filepath,
-          });
-        });
-      }
 
       await transporter.sendMail(mailOptions);
       console.log('Email sent successfully!');
