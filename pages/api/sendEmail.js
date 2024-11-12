@@ -13,7 +13,7 @@ const parseForm = (req) => {
   return new Promise((resolve, reject) => {
     const form = formidable({
       keepExtensions: true,
-      uploadDir: path.join(process.cwd(), '/tmp'),
+      uploadDir: path.join('/tmp'), // Use Vercel's temp directory
     });
 
     form.parse(req, (err, fields, files) => {
@@ -67,12 +67,11 @@ const handler = async (req, res) => {
       attachments.forEach((file) => {
         mailOptions.attachments.push({
           filename: file.originalFilename || 'unknown',
-          path: file.filepath,
+          path: file.filepath,  // Use the temporary file path
         });
       });
 
       await transporter.sendMail(mailOptions);
-
       deleteTempFiles(attachments);
 
       res.status(200).json({ message: 'Email sent successfully!' });
