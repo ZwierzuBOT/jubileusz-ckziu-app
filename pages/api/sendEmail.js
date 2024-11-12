@@ -5,22 +5,15 @@ import formidable from 'formidable';
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false,  // This is to disable the default body parser to handle file uploads
   },
 };
-
-const tmpDir = path.join(process.cwd(), '/tmp');  // Define path for local tmp folder
-
-// Ensure that the tmp directory exists locally (for localhost use)
-if (!fs.existsSync(tmpDir)) {
-  fs.mkdirSync(tmpDir, { recursive: true });
-}
 
 const parseForm = (req) => {
   return new Promise((resolve, reject) => {
     const form = formidable({
       keepExtensions: true,
-      uploadDir: tmpDir, // Use the local tmp directory
+      uploadDir: path.join(process.cwd(), '/tmp'), // Ensure the /tmp folder exists
     });
 
     form.parse(req, (err, fields, files) => {
@@ -54,7 +47,7 @@ const handler = async (req, res) => {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: process.env.EMAIL_USER,
+          user: process.env.EMAIL_USER,  
           pass: process.env.EMAIL_PASS,
         },
       });
@@ -73,7 +66,7 @@ const handler = async (req, res) => {
 
       attachments.forEach((file) => {
         mailOptions.attachments.push({
-          filename: file.originalFilename || 'unknown',
+          filename: file.originalFilename || 'unknown', 
           path: file.filepath,
         });
       });
