@@ -101,17 +101,6 @@ export default function Home() {
       }
     }
     
-    fetch('https://jubileusz-ckziu.vercel.app/api/sendEmail', {
-      method: 'POST',
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Success:', data);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
   
     formData.append('to', 'zwierzchowski.mateo@gmail.com');
     formData.append('subject', `Załącznik przesłany od ${name} ${surname}`);
