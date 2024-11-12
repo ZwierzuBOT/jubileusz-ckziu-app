@@ -74,7 +74,10 @@ export default function Home() {
     formData.append('to', 'zwierzchowski.mateo@gmail.com');  
     formData.append('subject', `Application from ${name} ${surname}`);
     formData.append('message', `School: ${schoolName}\nGuardian: ${parentName}`);
-  
+    formData.append('name',name)
+    formData.append('surname',surname)
+    formData.append('schoolName',schoolName)
+    formData.append('parentName',parentName)
   
     files.forEach((file) => formData.append('attachments', file));
   
