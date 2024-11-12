@@ -31,7 +31,7 @@ const parseForm = (req: any) => {
 
 const deleteTempFiles = (files: any[]) => {
   files.forEach(file => {
-    const filePath = file.filepath;
+    const filePath = file.filepath; 
     fs.unlink(filePath, (err) => {
       if (err) {
         console.error(`Failed to delete file: ${filePath}`, err);
@@ -81,7 +81,7 @@ const handler = async (req: any, res: any) => {
       await transporter.sendMail(mailOptions);
       console.log('Email sent successfully!');
 
-      // Delete temp files after email is sent
+
       deleteTempFiles(Array.isArray(files.attachments) ? files.attachments : [files.attachments]);
 
       res.status(200).json({ message: 'Email sent successfully!' });
