@@ -2,6 +2,7 @@
 import { useState, ChangeEvent, DragEvent, useEffect, FormEvent } from 'react';
 import { SignedIn, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+
 export default function Home() {
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
@@ -11,10 +12,13 @@ export default function Home() {
   const [schoolName, setSchoolName] = useState('');
   const [parentName, setParentName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-
+  const [totalFileSize, setTotalFileSize] = useState(0);
+  
   const { user } = useUser();
-
+  const router = useRouter();
+  
   const MAX_FILE_NAME_LENGTH = 30;
+  const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50 MB in bytes
 
   const truncateFileName = (fileName: string) => {
     return fileName.length > MAX_FILE_NAME_LENGTH
@@ -29,12 +33,20 @@ export default function Home() {
     return `${fileCount} plików wybranych`;
   };
 
+  const calculateTotalFileSize = (files: File[]) => {
+    return files.reduce((acc, file) => acc + file.size, 0);
+  };
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length > 0) {
-      setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
-      const truncatedNames = selectedFiles.map((file) => truncateFileName(file.name));
-      setFileNames((prevFileNames) => [...prevFileNames, ...truncatedNames]);
+      const newFiles = [...files, ...selectedFiles];
+      setFiles(newFiles);
+      setFileNames((prevFileNames) => [
+        ...prevFileNames,
+        ...selectedFiles.map((file) => truncateFileName(file.name)),
+      ]);
+      setTotalFileSize(calculateTotalFileSize(newFiles));
     }
   };
 
@@ -59,15 +71,21 @@ export default function Home() {
 
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
-      setFiles((prevFiles) => [...prevFiles, ...droppedFiles]);
-      const truncatedNames = droppedFiles.map((file) => truncateFileName(file.name));
-      setFileNames((prevFileNames) => [...prevFileNames, ...truncatedNames]);
+      const newFiles = [...files, ...droppedFiles];
+      setFiles(newFiles);
+      setFileNames((prevFileNames) => [
+        ...prevFileNames,
+        ...droppedFiles.map((file) => truncateFileName(file.name)),
+      ]);
+      setTotalFileSize(calculateTotalFileSize(newFiles));
     }
   };
 
   const handleDeleteFile = (fileName: string) => {
+    const updatedFiles = files.filter(file => file.name !== fileName);
     setFileNames((prevFileNames) => prevFileNames.filter(name => name !== fileName));
-    setFiles((prevFiles) => prevFiles.filter(file => file.name !== fileName));
+    setFiles(updatedFiles);
+    setTotalFileSize(calculateTotalFileSize(updatedFiles));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLElement>) => {
@@ -110,14 +128,11 @@ export default function Home() {
     }
   };
   
-  const router = useRouter()
-  useEffect(()=>{
+  useEffect(() => {
     if (!user){
-      router.push("/sign-in")
+      router.push("/sign-in");
     }
-  })
-
-  
+  }, [user, router]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2000);
@@ -198,6 +213,9 @@ export default function Home() {
                 </label>
               </div>
             </div>
+            <p className={totalFileSize > MAX_TOTAL_SIZE ? 'text-red-500' : 'text-gray-100'}>
+              Pliki nie mogą przekraczać 50mb
+            </p>
             <div className="h-1/2 flex flex-col items-center justify-center">
               <ul className="text-white list-disc pl-5">
                 {fileNames.map((fileName, index) => (
@@ -214,7 +232,11 @@ export default function Home() {
                 ))}
               </ul>
             </div>
-            <button type="submit" className="mt-4 bg-blue-700 text-white rounded-lg py-2">
+            <button
+              type="submit"
+              className={`mt-4 text-white rounded-lg py-2 ${totalFileSize > MAX_TOTAL_SIZE ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-700'}`}
+              disabled={totalFileSize > MAX_TOTAL_SIZE}
+            >
               Prześlij
             </button>
           </form>
@@ -231,7 +253,6 @@ export default function Home() {
         </div>
       </div>
       </SignedIn>
-
     );
   }
 }
