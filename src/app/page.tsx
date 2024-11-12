@@ -93,42 +93,22 @@ export default function Home() {
   
     const formData = new FormData();
   
-    
-    const fileInput = document.getElementById('file-upload') as HTMLInputElement;  
+    // Append the form data
+    formData.append('name', name);
+    formData.append('surname', surname);
+    formData.append('schoolName', schoolName);
+    formData.append('parentName', parentName);
+  
+    // Append the files
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput && fileInput.files) {
-      if (fileInput.files.length > 0) {
-        formData.append('attachments', fileInput.files[0]);  
-      }
-    }
-    
-    fetch('https://jubileusz-ckziu.vercel.app/api/sendEmail', {
-      method: 'POST',
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Success:', data);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
+      Array.from(fileInput.files).forEach((file) => {
+        formData.append('attachments', file);
       });
-  
-    formData.append('to', 'zwierzchowski.mateo@gmail.com');
-    formData.append('subject', `Załącznik przesłany od ${name} ${surname}`);
-    formData.append('message', `Imię: ${name}\nNazwisko: ${surname}\nSzkoła: ${schoolName}\nOpiekun Szkolny: ${parentName}`);
-    formData.append('name', name);  
-    formData.append('surname', surname);  
-    formData.append('parentName', parentName); 
-    formData.append('schoolName', schoolName);  
-    if (user && user.emailAddresses.length > 0) {
-      const userEmail = user.emailAddresses[0].emailAddress; 
-      formData.append("userEmail", userEmail || "");
     }
-  
-    files.forEach((file) => formData.append('attachments', file));
   
     try {
-      const response = await fetch('/api/sendEmail', {
+      const response = await fetch('https://jubileusz-ckziu.vercel.app/api/sendEmail', {
         method: 'POST',
         body: formData,
       });
@@ -143,6 +123,7 @@ export default function Home() {
       alert('Error sending email');
     }
   };
+  
   
   
   useEffect(() => {
