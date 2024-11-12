@@ -3,7 +3,7 @@ import formidable from 'formidable';
 
 export const config = {
   api: {
-    bodyParser: false, // Disable Next.js body parser to handle the file upload manually
+    bodyParser: false,
   },
 };
 
@@ -11,7 +11,6 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const form = new formidable.IncomingForm();
     
-    // Handle file upload in memory
     form.parse(req, async (err, fields, files) => {
       if (err) {
         console.error("Error parsing form:", err);
@@ -19,21 +18,19 @@ export default async function handler(req, res) {
       }
 
       const { name, surname, schoolName, parentName } = fields;
-      const uploadedFiles = files['attachments']; // File input name (attachments) should match the one in your frontend
+      const uploadedFiles = files['attachments'];
 
-      // Create the Nodemailer transport
       const transporter = nodemailer.createTransport({
-        service: 'gmail', // Change this to your preferred email service
+        service: 'gmail',
         auth: {
-          user: process.env.EMAIL_USER,  // Use the email from .env.local
-        pass: process.env.EMAIL_PASS,  // Use the app password from .env.local
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
         },
       });
 
-      // Prepare the email options with attachments from form
       const attachments = Array.isArray(uploadedFiles) ? uploadedFiles.map(file => ({
         filename: file.originalFilename,
-        content: file.filepath, // Path to the temporary file stored in memory
+        content: file.filepath,
       })) : [{
         filename: uploadedFiles.originalFilename,
         content: uploadedFiles.filepath,
@@ -44,7 +41,7 @@ export default async function handler(req, res) {
         to: 'zwierzchowski.mateo@gmail.com',
         subject: 'New Form Submission with Files',
         text: `Name: ${name}\nSurname: ${surname}\nSchool: ${schoolName}\nParent: ${parentName}\n\nFiles are attached.`,
-        attachments, // Attach the files to the email
+        attachments,
       };
 
       try {
