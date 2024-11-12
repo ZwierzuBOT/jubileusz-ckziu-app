@@ -1,19 +1,25 @@
 import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
-import formidable from 'formidable';
-import { promisify } from 'util';
+import formidable, { Files, Fields } from 'formidable';
 
 export const config = {
   api: {
-    bodyParser: false, 
+    bodyParser: false,
   },
 };
 
-const parseForm = (req: any) => {
+interface ParsedForm {
+  fields: Fields;
+  files: {
+    attachments: Files;
+  };
+}
+
+const parseForm = (req: any): Promise<ParsedForm> => {
   return new Promise((resolve, reject) => {
-    const form = formidable({ 
-      keepExtensions: true, 
+    const form = formidable({
+      keepExtensions: true,
       uploadDir: path.join(process.cwd(), '/tmp'),
     });
 
@@ -21,17 +27,15 @@ const parseForm = (req: any) => {
       if (err) {
         reject(err);
       } else {
-        console.log('Parsed fields:', fields);
-        console.log('Parsed files:', files);
-        resolve({ fields, files });
+        resolve({ fields, files: { attachments: files.attachments } });
       }
     });
   });
 };
 
-const deleteTempFiles = (files: any[]) => {
-  files.forEach(file => {
-    const filePath = file.filepath; 
+const deleteTempFiles = (files: { filepath: string }[]) => {
+  files.forEach((file) => {
+    const filePath = file.filepath;
     fs.unlink(filePath, (err) => {
       if (err) {
         console.error(`Failed to delete file: ${filePath}`, err);
@@ -47,23 +51,19 @@ const handler = async (req: any, res: any) => {
     try {
       const { fields, files } = await parseForm(req);
 
-      console.log('Form parsed successfully');
-      console.log('Fields:', fields);
-      console.log('Files:', files);
-
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: 'zwierzchowski.mateo@gmail.com', 
-          pass: 'rmhy oihb upwo hbam', 
+          user: 'zwierzchowski.mateo@gmail.com',
+          pass: 'rmhy oihb upwo hbam',
         },
       });
 
       const mailOptions = {
-        from: 'zwierzchowski.mateo@gmail.com', 
-        to: 'zwierzchowski.mateo@gmail.com',  
-        subject: `Załącznik przesłany od ${fields.name} ${fields.surname}`, 
-        text: `Imię: ${fields.name}\nNazwisko: ${fields.surname}\nSzkoła: ${fields.schoolName}\nOpiekun Szkolny: ${fields.parentName}`, 
+        from: 'zwierzchowski.mateo@gmail.com',
+        to: 'zwierzchowski.mateo@gmail.com',
+        subject: `Załącznik przesłany od ${fields.name} ${fields.surname}`,
+        text: `Imię: ${fields.name}\nNazwisko: ${fields.surname}\nSzkoła: ${fields.schoolName}\nOpiekun Szkolny: ${fields.parentName}`,
         attachments: [],
       };
 
@@ -78,9 +78,6 @@ const handler = async (req: any, res: any) => {
       }
 
       await transporter.sendMail(mailOptions);
-      console.log('Email sent successfully!');
-
-
       deleteTempFiles(Array.isArray(files.attachments) ? files.attachments : [files.attachments]);
 
       res.status(200).json({ message: 'Email sent successfully!' });
