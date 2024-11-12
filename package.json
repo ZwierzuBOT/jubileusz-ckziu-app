@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
     "@sendgrid/mail": "^8.1.4",
+    "@supabase/supabase-js": "^2.46.1",
     "@vercel/blob": "^0.26.0",
     "body-parser": "^1.20.3",
     "busboy": "^1.6.0",

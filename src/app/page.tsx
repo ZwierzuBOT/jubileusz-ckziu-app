@@ -91,37 +91,7 @@ export default function Home() {
   const handleSubmit = async (e: FormEvent<HTMLElement>) => {
     e.preventDefault();
   
-    const formData = new FormData();
-    formData.append('to', 'zwierzchowski.mateo@gmail.com');
-    formData.append('subject', `Załącznik przesłany od ${name} ${surname}`);
-    formData.append('message', `Imię: ${name}\nNazwisko: ${surname}\nSzkoła: ${schoolName}\nOpiekun Szkolny: ${parentName}`);
-    formData.append('name', name);  
-    formData.append('surname', surname);  
-    formData.append('parentName', parentName); 
-    formData.append('schoolName', schoolName);  
-    if (user && user.emailAddresses.length > 0) {
-      const userEmail = user.emailAddresses[0].emailAddress; 
-      formData.append("userEmail", userEmail || "");
-    }
   
-  
-    files.forEach((file) => formData.append('attachments', file));
-  
-    try {
-      const response = await fetch('/api/sendEmail', {
-        method: 'POST',
-        body: formData,
-      });
-  
-      if (response.ok) {
-        alert('Email sent successfully');
-      } else {
-        alert('Error sending email');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error sending email');
-    }
   };
   
   useEffect(() => {
