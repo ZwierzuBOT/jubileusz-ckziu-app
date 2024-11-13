@@ -38,7 +38,6 @@ const handler = async (req, res) => {
     try {
       console.log('Received POST request');
 
-      const formData = new URLSearchParams();
       const parts = req.headers['content-type'].split('boundary=');
       if (parts.length === 2) {
         const boundary = '--' + parts[1];
