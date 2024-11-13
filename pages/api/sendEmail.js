@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import { Dropbox } from 'dropbox';
-import fs from 'fs/promises';
 import dotenv from 'dotenv';
 
 dotenv.config();
