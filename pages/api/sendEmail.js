@@ -22,7 +22,7 @@ const readStreamToBuffer = (stream) => {
 const uploadFileToDropbox = async (buffer, fileName) => {
   const dbx = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
   const response = await dbx.filesUpload({
-    path: `/${fileName}`,
+    path: `/Aplikacje/Jubileusz-Ckziu/${fileName}`,
     contents: buffer,
   });
 
