@@ -71,25 +71,21 @@ export default function Home() {
     e.preventDefault();
   
     const formData = new FormData();
-    formData.append('to', 'zwierzchowski.mateo@gmail.com');  
-    formData.append('subject', `Application from ${name} ${surname}`);
-    formData.append('message', `School: ${schoolName}\nGuardian: ${parentName}`);
-    formData.append('name',name)
-    formData.append('surname',surname)
-    formData.append('schoolName',schoolName)
-    formData.append('parentName',parentName)
+    formData.append('name', name);
+    formData.append('surname', surname);
+    formData.append('schoolName', schoolName);
+    formData.append('parentName', parentName);
   
     files.forEach((file) => formData.append('attachments', file));
   
     try {
       const response = await fetch('/api/sendEmail', {
         method: 'POST',
-        body: formData,
+        body: formData, 
       });
   
       if (response.ok) {
         alert('Email sent successfully');
-        console.log(name, surname, parentName, schoolName);
       } else {
         alert('Error sending email');
       }
@@ -98,6 +94,7 @@ export default function Home() {
       alert('Error sending email');
     }
   };
+  
   
   
 
